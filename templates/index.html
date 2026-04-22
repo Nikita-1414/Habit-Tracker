@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Habit Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c27;
+      --border: rgba(255,255,255,0.07);
+      --text: #f0f0f5;
+      --muted: #6b6b80;
+      --accent: #a78bfa;
+      --accent2: #34d399;
+      --danger: #f87171;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    /* BG Orbs */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(167,139,250,0.08), transparent 70%);
+      top: -100px; left: -100px;
+    }
+    body::after {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(52,211,153,0.06), transparent 70%);
+      bottom: 0; right: -100px;
+    }
+
+    .container { max-width: 860px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    /* HEADER */
+    header {
+      padding: 48px 0 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header-left h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 5vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+    .header-left h1 span { color: var(--accent); }
+    .header-left p { color: var(--muted); margin-top: 6px; font-size: 0.9rem; }
+    .btn-add {
+      background: var(--accent);
+      color: #0a0a0f;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      letter-spacing: 0.5px;
+    }
+    .btn-add:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(167,139,250,0.3); }
+
+    /* STATS BAR */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+    .stat-card .val {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .stat-card .label { font-size: 0.78rem; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 36px;
+      width: 90%;
+      max-width: 440px;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal h2 { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 24px; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .form-group input[type="text"],
+    .form-group textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 12px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+      resize: none;
+    }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--accent); }
+    .color-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .color-dot {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .color-dot:hover, .color-dot.selected { transform: scale(1.2); border-color: white; }
+    .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+    .btn-save {
+      flex: 1;
+      background: var(--accent);
+      color: #0a0a0f;
+      border: none;
+      padding: 13px;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-save:hover { opacity: 0.9; }
+    .btn-cancel {
+      flex: 1;
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 13px;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* HABIT CARDS */
+    .habits-grid { display: flex; flex-direction: column; gap: 18px; }
+    .habit-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .habit-card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+    .habit-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px; height: 100%;
+      background: var(--habit-color, var(--accent));
+      border-radius: 4px 0 0 4px;
+    }
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .habit-info h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .habit-info p { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+    .card-actions { display: flex; gap: 8px; align-items: center; }
+
+    /* Done Today Button */
+    .btn-check {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: 2px solid var(--habit-color, var(--accent));
+      background: transparent;
+      color: var(--habit-color, var(--accent));
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-check.done {
+      background: var(--habit-color, var(--accent));
+      color: #0a0a0f;
+    }
+    .btn-check:hover { opacity: 0.85; }
+    .btn-del {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-del:hover { background: rgba(248,113,113,0.1); color: var(--danger); border-color: var(--danger); }
+
+    /* Badges */
+    .badges { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .badge {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .badge .icon { font-size: 1rem; }
+    .badge.fire .val { color: #fb923c; font-weight: 700; }
+    .badge.chart .val { color: var(--accent2); font-weight: 700; }
+
+    /* Weekly dots */
+    .week-row { display: flex; gap: 8px; margin-top: 16px; align-items: center; }
+    .week-day { text-align: center; }
+    .week-day .day-label { font-size: 0.68rem; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; }
+    .dot {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--surface2);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem;
+    }
+    .dot.done { background: var(--habit-color, var(--accent)); border-color: var(--habit-color, var(--accent)); }
+    .dot.today { box-shadow: 0 0 0 2px var(--habit-color, var(--accent)); }
+    .dot form { display: contents; }
+    .dot button {
+      background: none; border: none; cursor: pointer;
+      width: 100%; height: 100%; border-radius: 50%;
+    }
+
+    /* Chart section */
+    .chart-toggle {
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-top: 12px;
+      padding: 0;
+      display: flex; align-items: center; gap: 4px;
+      transition: color 0.2s;
+    }
+    .chart-toggle:hover { color: var(--accent); }
+    .chart-section { display: none; margin-top: 16px; }
+    .chart-section.open { display: block; }
+    .chart-section canvas { max-height: 100px; }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 80px 0;
+      color: var(--muted);
+    }
+    .empty .big { font-size: 3rem; margin-bottom: 12px; }
+    .empty h3 { font-family: 'Syne', sans-serif; font-size: 1.2rem; color: var(--text); }
+    .empty p { font-size: 0.9rem; margin-top: 6px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <h1>Habit <span>Tracker</span></h1>
+      <p>📅 {{ today }}</p>
+    </div>
+    <button class="btn-add" onclick="openModal()">+ Add Habit</button>
+  </header>
+
+  <!-- STATS -->
+  {% set total = habits | length %}
+  {% set done_today = habits | selectattr('done_today') | list | length %}
+  {% set avg_streak = (habits | sum(attribute='streak') / total) | round(1) if total > 0 else 0 %}
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="val">{{ total }}</div>
+      <div class="label">Total Habits</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">{{ done_today }}</div>
+      <div class="label">Done Today</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">{{ avg_streak }}</div>
+      <div class="label">Avg Streak 🔥</div>
+    </div>
+  </div>
+
+  <!-- HABITS -->
+  {% if habits %}
+  <div class="habits-grid">
+    {% for h in habits %}
+    <div class="habit-card" style="--habit-color: {{ h.color }}">
+      <div class="card-top">
+        <div class="habit-info">
+          <h3>{{ h.name }}</h3>
+          {% if h.description %}<p>{{ h.description }}</p>{% endif %}
+        </div>
+        <div class="card-actions">
+          <form method="POST" action="/toggle/{{ h.id }}">
+            <input type="hidden" name="date" value="{{ h.week[-1].full_date }}"/>
+            <button type="submit" class="btn-check {{ 'done' if h.done_today else '' }}">
+              {{ '✓ Done' if h.done_today else 'Mark Done' }}
+            </button>
+          </form>
+          <form method="POST" action="/delete/{{ h.id }}" onsubmit="return confirm('Delete this habit?')">
+            <button type="submit" class="btn-del">✕</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div class="badges">
+        <div class="badge fire">
+          <span class="icon">🔥</span>
+          <span class="val">{{ h.streak }}</span>
+          <span>day streak</span>
+        </div>
+        <div class="badge chart">
+          <span class="icon">📊</span>
+          <span class="val">{{ h.rate }}%</span>
+          <span>30-day rate</span>
+        </div>
+      </div>
+
+      <!-- Week Row -->
+      <div class="week-row">
+        {% for day in h.week %}
+        <div class="week-day">
+          <div class="day-label">{{ day.date }}</div>
+          <div class="dot {{ 'done' if day.completed else '' }} {{ 'today' if loop.last else '' }}">
+            <form method="POST" action="/toggle/{{ h.id }}">
+              <input type="hidden" name="date" value="{{ day.full_date }}"/>
+              <button type="submit" title="{{ day.full_date }}"></button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Chart -->
+      <button class="chart-toggle" onclick="toggleChart(this, {{ h.id }})">
+        ▸ Show 30-day progress
+      </button>
+      <div class="chart-section" id="chart-{{ h.id }}">
+        <canvas id="canvas-{{ h.id }}"></canvas>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty">
+    <div class="big">🌱</div>
+    <h3>No habits yet!</h3>
+    <p>Click "Add Habit" to start building your streak.</p>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- ADD HABIT MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>New Habit</h2>
+    <form method="POST" action="/add">
+      <div class="form-group">
+        <label>Habit Name *</label>
+        <input type="text" name="name" placeholder="e.g. Morning Run" required />
+      </div>
+      <div class="form-group">
+        <label>Description (optional)</label>
+        <textarea name="description" rows="2" placeholder="e.g. Run 5km every morning"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Pick a Color</label>
+        <div class="color-row" id="colorRow">
+          <div class="color-dot selected" style="background:#a78bfa" data-color="#a78bfa"></div>
+          <div class="color-dot" style="background:#34d399" data-color="#34d399"></div>
+          <div class="color-dot" style="background:#60a5fa" data-color="#60a5fa"></div>
+          <div class="color-dot" style="background:#fb923c" data-color="#fb923c"></div>
+          <div class="color-dot" style="background:#f472b6" data-color="#f472b6"></div>
+          <div class="color-dot" style="background:#facc15" data-color="#facc15"></div>
+        </div>
+        <input type="hidden" name="color" id="selectedColor" value="#a78bfa"/>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-save">Add Habit ✓</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Modal
+  function openModal() { document.getElementById('modal').classList.add('open'); }
+  function closeModal() { document.getElementById('modal').classList.remove('open'); }
+  document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Color picker
+  document.querySelectorAll('.color-dot').forEach(dot => {
+    dot.addEventListener('click', function() {
+      document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+      this.classList.add('selected');
+      document.getElementById('selectedColor').value = this.dataset.color;
+    });
+  });
+
+  // Chart toggle
+  const chartCache = {};
+  async function toggleChart(btn, habitId) {
+    const section = document.getElementById('chart-' + habitId);
+    section.classList.toggle('open');
+    btn.textContent = section.classList.contains('open')
+      ? '▾ Hide 30-day progress'
+      : '▸ Show 30-day progress';
+
+    if (section.classList.contains('open') && !chartCache[habitId]) {
+      const res = await fetch('/api/monthly/' + habitId);
+      const data = await res.json();
+      chartCache[habitId] = true;
+      const labels = data.map(d => d.date.slice(5));
+      const values = data.map(d => d.completed);
+      const ctx = document.getElementById('canvas-' + habitId).getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            data: values,
+            backgroundColor: values.map(v => v ? 'rgba(167,139,250,0.7)' : 'rgba(255,255,255,0.05)'),
+            borderRadius: 4,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#6b6b80', font: { size: 9 } }, grid: { display: false } },
+            y: { display: false, max: 1.5 }
+          }
+        }
+      });
+    }
+  }
+</script>
+</body>
+</html>
