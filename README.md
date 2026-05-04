@@ -11,13 +11,14 @@ A beautiful and minimal **habit tracking web app** built with Python Flask and S
 
 ## 📸 Features
 
+- ✅ **User Authentication** — secure login & registration with hashed passwords
 - ✅ **Add / Delete Habits** — with custom name, description & color
 - 🔥 **Streak Tracking** — consecutive days auto-calculated
 - 📊 **30-Day Completion Rate** — see your consistency in %
 - 📅 **Weekly Dots** — visual last 7 days status (clickable)
 - 📈 **30-Day Bar Chart** — interactive progress chart via Chart.js
-- 🗄️ **SQLite Database** — all data saved locally, no signup needed
-- 🌙 **Dark UI** — clean, modern dark theme
+- 🗄️ **SQLite Database** — all data persisted locally with multi-user support
+- 🌙 **Dark UI** — clean, modern dark theme with responsive design
 
 ---
 
@@ -31,7 +32,12 @@ habit-tracker/
 ├── requirements.txt    # Python dependencies
 │
 ├── templates/
-│   └── index.html      # Frontend (HTML + CSS + JS)
+│   ├── index.html      # Frontend (HTML + JS)
+│   ├── login.html      # Login page
+│   └── register.html   # Registration page
+│
+├── static/
+│   └── style.css       # Stylesheet (CSS)
 │
 └── habits.db           # SQLite DB (auto-created on first run)
 ```
@@ -72,6 +78,7 @@ http://127.0.0.1:5000
 | Backend | Python, Flask |
 | Database | SQLite (via Python's built-in `sqlite3`) |
 | Frontend | HTML, CSS, JavaScript |
+| Security | bcrypt (password hashing) |
 | Charts | Chart.js (CDN) |
 | Fonts | Google Fonts (Syne + DM Sans) |
 
@@ -79,22 +86,27 @@ http://127.0.0.1:5000
 
 ## 📋 How to Use
 
-1. Click **"+ Add Habit"** to create a new habit
-2. Choose a name, description, and color
-3. Every day, click **"Mark Done"** to log your habit
-4. Watch your 🔥 streak grow!
-5. Click **"Show 30-day progress"** to see your bar chart
-6. Click any weekly dot to toggle past days
+1. **Register** — Create a new account with email & password
+2. **Login** — Sign in with your credentials
+3. Click **"+ Add Habit"** to create a new habit
+4. Choose a name, description, and color
+5. Every day, click **"Mark Done"** to log your habit
+6. Watch your 🔥 streak grow!
+7. Click **"Show 30-day progress"** to see your bar chart
+8. Click any weekly dot to toggle past days
+9. Click **"Logout"** when done
 
 ---
 
 ## 🚀 Future Improvements
 
-- [ ] User authentication (login/signup)
 - [ ] Email/notification reminders
 - [ ] Export data as CSV
 - [ ] Mobile app (React Native)
 - [ ] Dark/Light theme toggle
+- [ ] Social features (share streaks, friend challenges)
+- [ ] Advanced analytics & insightsnders
+
 
 ---
 

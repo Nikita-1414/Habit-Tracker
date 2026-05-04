@@ -1,7 +1,9 @@
-# Database
-habits.db
-
-# Python cache
 __pycache__/
 *.pyc
 *.pyo
+habits.db
+.env
+venv/
+*.zip
+.DS_Store
+Thumbs.db

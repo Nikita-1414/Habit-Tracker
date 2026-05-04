@@ -1,27 +1,44 @@
 import sqlite3
+import os
 from datetime import date, timedelta
 
-DB_NAME = "habits.db"
+DB_NAME = os.path.join(os.path.dirname(__file__), "habits.db")
 
 def get_connection():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 def init_db():
     conn = get_connection()
     cursor = conn.cursor()
 
+    # Users table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS habits (
+        CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            description TEXT,
-            color TEXT DEFAULT '#6366f1',
+            username TEXT NOT NULL UNIQUE,
+            email TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL,
             created_at DATE DEFAULT (date('now'))
         )
     """)
 
+    # Habits table with user_id
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS habits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            color TEXT DEFAULT '#6366f1',
+            created_at DATE DEFAULT (date('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    # Logs table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,24 +53,57 @@ def init_db():
     conn.commit()
     conn.close()
 
-def add_habit(name, description, color):
+# ─── USER FUNCTIONS ───────────────────────────────────────────
+
+def create_user(username, email, password):
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+            (username, email, password)
+        )
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+def get_user_by_email(email):
+    conn = get_connection()
+    user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    conn.close()
+    return user
+
+def get_user_by_id(user_id):
+    conn = get_connection()
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    conn.close()
+    return user
+
+# ─── HABIT FUNCTIONS ──────────────────────────────────────────
+
+def add_habit(user_id, name, description, color):
     conn = get_connection()
     conn.execute(
-        "INSERT INTO habits (name, description, color) VALUES (?, ?, ?)",
-        (name, description, color)
+        "INSERT INTO habits (user_id, name, description, color) VALUES (?, ?, ?, ?)",
+        (user_id, name, description, color)
     )
     conn.commit()
     conn.close()
 
-def delete_habit(habit_id):
+def delete_habit(habit_id, user_id):
     conn = get_connection()
-    conn.execute("DELETE FROM habits WHERE id = ?", (habit_id,))
+    conn.execute("DELETE FROM habits WHERE id = ? AND user_id = ?", (habit_id, user_id))
     conn.commit()
     conn.close()
 
-def get_all_habits():
+def get_all_habits(user_id):
     conn = get_connection()
-    habits = conn.execute("SELECT * FROM habits ORDER BY created_at DESC").fetchall()
+    habits = conn.execute(
+        "SELECT * FROM habits WHERE user_id = ? ORDER BY created_at DESC",
+        (user_id,)
+    ).fetchall()
     conn.close()
     return habits
 
