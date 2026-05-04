@@ -11,6 +11,9 @@ from functools import wraps
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
 
+# Initialize database when app starts (needed for Render/gunicorn)
+init_db()
+
 # ─── AUTH DECORATOR ───────────────────────────────────────────
 
 def login_required(f):
