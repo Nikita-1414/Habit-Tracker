@@ -2,7 +2,9 @@ import sqlite3
 import os
 from datetime import date, timedelta
 
-DB_NAME = os.path.join(os.path.dirname(__file__), "habits.db")
+# Use /tmp for Render, fallback to local for development
+DB_DIR = os.environ.get("DB_DIR", os.path.dirname(__file__))
+DB_NAME = os.path.join(DB_DIR, "habits.db")
 
 def get_connection():
     conn = sqlite3.connect(DB_NAME)
