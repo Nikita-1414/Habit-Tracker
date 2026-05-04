@@ -8,6 +8,6 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: SECRET_KEY
-        generateValue: true
+        value: habit-tracker-secret-key-render-2024
       - key: DB_DIR
         value: /tmp
