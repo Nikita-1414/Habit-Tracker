@@ -1,9 +1,9 @@
 # 🔥 Habit Tracker
 
-A beautiful and minimal **habit tracking web app** built with Python Flask and SQLite. Track your daily habits, build streaks, and visualize your progress — all in one place.
+A beautiful and minimal **habit tracking app** built with Python Streamlit and SQLite. Track your daily habits, build streaks, and visualize your progress — all in one place.
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?style=flat-square&logo=python)
-![Flask](https://img.shields.io/badge/Flask-2.3+-black?style=flat-square&logo=flask)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red?style=flat-square&logo=streamlit)
 ![SQLite](https://img.shields.io/badge/SQLite-Database-green?style=flat-square&logo=sqlite)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
 
@@ -27,17 +27,12 @@ A beautiful and minimal **habit tracking web app** built with Python Flask and S
 ```
 habit-tracker/
 │
-├── app.py              # Main Flask app (routes)
+├── app.py              # Main Streamlit app
 ├── database.py         # DB setup, queries & logic
 ├── requirements.txt    # Python dependencies
 │
-├── templates/
-│   ├── index.html      # Frontend (HTML + JS)
-│   ├── login.html      # Login page
-│   └── register.html   # Registration page
-│
-├── static/
-│   └── style.css       # Stylesheet (CSS)
+├── .streamlit/
+│   └── config.toml     # Streamlit configuration
 │
 └── habits.db           # SQLite DB (auto-created on first run)
 ```
@@ -59,13 +54,11 @@ pip install -r requirements.txt
 
 ### 3. Run the App
 ```bash
-python app.py
+streamlit run app.py
 ```
 
 ### 4. Open in Browser
-```
-http://127.0.0.1:5000
-```
+Streamlit will automatically open your app in the browser (typically at `http://localhost:8501`). If not, check the terminal for the URL.
 
 > **Note:** `habits.db` will be created automatically on first run.
 
@@ -77,12 +70,11 @@ http://127.0.0.1:5000
 |-------|-----------|
 | Backend | Python, Flask |
 | Database | SQLite (via Python's built-in `sqlite3`) |
-| Frontend | HTML, CSS, JavaScript |
+| Frontend/Backend | Python, Streamlit |
+| Database | SQLite (via Python's built-in `sqlite3`) |
 | Security | bcrypt (password hashing) |
-| Charts | Chart.js (CDN) |
-| Fonts | Google Fonts (Syne + DM Sans) |
-
----
+| UI/Theme | Streamlit Components + Custom CSS |
+| Fonts | Streamlit Default
 
 ## 📋 How to Use
 
@@ -98,6 +90,29 @@ http://127.0.0.1:5000
 
 ---
 
+## 🌐 Deployment on Streamlit Cloud
+
+### 1. Push to GitHub
+```bash
+git add .
+git commit -m "Deploy to Streamlit"
+git push origin main
+```
+
+### 2. Deploy on Streamlit Cloud
+- Go to [Streamlit Cloud](https://streamlit.io/cloud)
+- Click **"New app"**
+- Select your GitHub repository, branch, and `app.py`
+- Click **"Deploy!"**
+
+### 3. Configure Environment Variables (if needed)
+In Streamlit Cloud dashboard, go to **App settings** → **Secrets** and add any environment variables.
+
+### Database Persistence
+SQLite database is stored locally in the Streamlit container. For persistent storage across deployments, consider using cloud databases (PostgreSQL, MongoDB, etc.).
+
+---
+
 ## 🚀 Future Improvements
 
 - [ ] Email/notification reminders
@@ -105,7 +120,7 @@ http://127.0.0.1:5000
 - [ ] Mobile app (React Native)
 - [ ] Dark/Light theme toggle
 - [ ] Social features (share streaks, friend challenges)
-- [ ] Advanced analytics & insightsnders
+- [ ] Advanced analytics & insightsenders
 
 
 ---
