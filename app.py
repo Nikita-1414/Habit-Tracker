@@ -26,6 +26,50 @@ except Exception as e:
     st.error(f"Database initialization error: {e}")
 
 # ─────────────────────────────────────────────────────────────
+# CUSTOM STYLING (Minimal, Stable CSS)
+# ─────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+    .habit-card {
+        border-left: 6px solid #a78bfa;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+        background-color: rgba(30, 30, 45, 0.6);
+    }
+    
+    .day-indicator {
+        display: inline-block;
+        width: 28px;
+        height: 28px;
+        margin: 3px;
+        border-radius: 4px;
+        text-align: center;
+        line-height: 28px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .day-completed {
+        background-color: #a78bfa;
+        color: white;
+    }
+    
+    .day-missed {
+        background-color: #3a3a50;
+        color: #8a8a9e;
+    }
+    
+    .stat-box {
+        background-color: rgba(30, 30, 45, 0.8);
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────────────────
 # SESSION STATE INITIALIZATION
 # ─────────────────────────────────────────────────────────────
 if "user_id" not in st.session_state:
@@ -34,6 +78,46 @@ if "username" not in st.session_state:
     st.session_state.username = None
 if "page" not in st.session_state:
     st.session_state.page = "login"
+if "show_add_habit" not in st.session_state:
+    st.session_state.show_add_habit = False
+
+# ─────────────────────────────────────────────────────────────
+# HELPER FUNCTIONS FOR 30-DAY TRACKING
+# ─────────────────────────────────────────────────────────────
+def get_30_day_status(habit_id):
+    """Get last 30 days status for a habit"""
+    conn = sqlite3.connect("habits.db")
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    cursor = conn.cursor()
+    
+    status = []
+    for i in range(29, -1, -1):
+        check_date = (date.today() - timedelta(days=i)).strftime("%Y-%m-%d")
+        result = cursor.execute(
+            "SELECT completed FROM logs WHERE habit_id = ? AND log_date = ?",
+            (habit_id, check_date)
+        ).fetchone()
+        status.append(bool(result["completed"]) if result else False)
+    
+    conn.close()
+    return status
+
+def render_30_day_grid(habit_id, habit_color):
+    """Render 30-day calendar grid"""
+    days_status = get_30_day_status(habit_id)
+    
+    # Create grid layout (6 rows x 5 columns for 30 days)
+    html = '<div style="display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0;">'
+    
+    for i, status in enumerate(days_status):
+        if status:
+            html += f'<div class="day-indicator day-completed" style="background-color: {habit_color};">✓</div>'
+        else:
+            html += f'<div class="day-indicator day-missed">·</div>'
+    
+    html += '</div>'
+    return html
 
 # ─────────────────────────────────────────────────────────────
 # AUTHENTICATION FUNCTIONS
@@ -81,6 +165,7 @@ def logout_user():
     st.session_state.user_id = None
     st.session_state.username = None
     st.session_state.page = "login"
+    st.session_state.show_add_habit = False
 
 # ─────────────────────────────────────────────────────────────
 # PAGE: REGISTER
@@ -133,105 +218,140 @@ def show_login_page():
 # ─────────────────────────────────────────────────────────────
 def show_dashboard_page():
     # Header
-    col1, col2 = st.columns([3, 1])
+    col1, col2, col3 = st.columns([2, 2, 1])
+    
     with col1:
-        st.title("🎯 Habit Tracker")
+        st.markdown("# 🎯 Habit Tracker")
         st.caption(f"📅 {date.today().strftime('%B %d, %Y')}")
     
     with col2:
+        pass
+    
+    with col3:
         st.write(f"👋 **{st.session_state.username}**")
-        if st.button("Logout", use_container_width=True):
+        if st.button("🚪 Logout", use_container_width=True, key="logout_main"):
             logout_user()
             st.rerun()
-    
-    st.divider()
     
     # Get user's habits
     user_id = st.session_state.user_id
     habits = get_all_habits(user_id)
     
     # Stats Bar
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        st.metric("Total Habits", len(habits))
+        st.markdown('<div class="stat-box"><h3>📊</h3><p><strong>{}</strong></p><p style="font-size: 0.8rem; color: #8a8a9e;">Total Habits</p></div>'.format(len(habits)), unsafe_allow_html=True)
     
     with col2:
         done_today = sum(1 for h in habits if is_completed_today(h["id"]))
-        st.metric("Done Today", done_today)
+        st.markdown('<div class="stat-box"><h3>✅</h3><p><strong>{}</strong></p><p style="font-size: 0.8rem; color: #8a8a9e;">Done Today</p></div>'.format(done_today), unsafe_allow_html=True)
     
     with col3:
         avg_streak = sum(get_streak(h["id"]) for h in habits) / len(habits) if habits else 0
-        st.metric("Avg Streak 🔥", f"{avg_streak:.1f}")
+        st.markdown('<div class="stat-box"><h3>🔥</h3><p><strong>{:.1f}</strong></p><p style="font-size: 0.8rem; color: #8a8a9e;">Avg Streak</p></div>'.format(avg_streak), unsafe_allow_html=True)
     
     with col4:
         avg_rate = sum(get_completion_rate(h["id"]) for h in habits) / len(habits) if habits else 0
-        st.metric("Avg Rate", f"{avg_rate:.0f}%")
+        st.markdown('<div class="stat-box"><h3>📈</h3><p><strong>{:.0f}%</strong></p><p style="font-size: 0.8rem; color: #8a8a9e;">Avg Rate</p></div>'.format(avg_rate), unsafe_allow_html=True)
+    
+    with col5:
+        if st.button("➕ Add Habit", use_container_width=True, key="add_habit_btn"):
+            st.session_state.show_add_habit = True
+            st.rerun()
     
     st.divider()
     
-    # Add Habit Section
-    st.subheader("➕ Add New Habit")
-    with st.form("add_habit_form", clear_on_submit=True):
-        habit_name = st.text_input("Habit Name", placeholder="e.g., Morning Exercise")
-        habit_desc = st.text_area("Description (optional)", placeholder="Add any notes about this habit", height=80)
-        habit_color = st.color_picker("Pick a Color", "#a78bfa")
+    # Add Habit Modal
+    if st.session_state.show_add_habit:
+        st.markdown("## ✨ New Habit")
+        with st.form("add_habit_form", clear_on_submit=False):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                habit_name = st.text_input("Habit Name", placeholder="e.g., Morning Run", key="habit_name_input")
+            
+            with col2:
+                habit_color = st.color_picker("Pick a Color", "#a78bfa", key="habit_color_input")
+            
+            habit_desc = st.text_area("Description", placeholder="e.g., Run 5km every morning", height=60, key="habit_desc_input")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.form_submit_button("✅ Add Habit", use_container_width=True):
+                    if habit_name.strip():
+                        add_habit(user_id, habit_name, habit_desc, habit_color)
+                        st.session_state.show_add_habit = False
+                        st.success("Habit added successfully!")
+                        st.rerun()
+                    else:
+                        st.error("Please enter a habit name.")
+            
+            with col2:
+                if st.form_submit_button("❌ Cancel", use_container_width=True):
+                    st.session_state.show_add_habit = False
+                    st.rerun()
         
-        if st.form_submit_button("Add Habit", use_container_width=True):
-            if habit_name.strip():
-                add_habit(user_id, habit_name, habit_desc, habit_color)
-                st.success("✅ Habit added successfully!")
-                st.rerun()
-            else:
-                st.error("Please enter a habit name.")
+        st.divider()
     
-    st.divider()
-    
-    # Display Habits
+    # Display Habits with Beautiful Cards
     if habits:
-        st.subheader("📋 Your Habits")
+        st.markdown("## 📋 Your Habits")
         
         for habit in habits:
             habit_id = habit["id"]
             streak = get_streak(habit_id)
             rate = get_completion_rate(habit_id)
-            week_status = get_last_7_days_status(habit_id)
             done_today = is_completed_today(habit_id)
             
+            # Habit Card
             with st.container():
-                col1, col2, col3, col4 = st.columns([2, 1.5, 1.5, 1])
+                # Card Header
+                col1, col2, col3, col4 = st.columns([2, 0.8, 0.8, 0.4])
                 
                 with col1:
-                    st.subheader(f"{habit['name']}")
+                    st.markdown(f"<div style='margin-bottom: 5px;'><strong style='font-size: 1.1rem;'>{habit['name']}</strong></div>", unsafe_allow_html=True)
                     if habit['description']:
                         st.caption(habit['description'])
                 
                 with col2:
-                    st.metric("Streak", f"🔥 {streak}")
+                    st.markdown(f"<div style='text-align: center;'><div style='font-size: 0.7rem; color: #8a8a9e;'>STREAK</div><div style='font-size: 1.2rem; font-weight: bold; color: #a78bfa;'>🔥 {streak}</div></div>", unsafe_allow_html=True)
                 
                 with col3:
-                    st.metric("Rate", f"{rate:.0f}%")
+                    st.markdown(f"<div style='text-align: center;'><div style='font-size: 0.7rem; color: #8a8a9e;'>RATE</div><div style='font-size: 1.2rem; font-weight: bold; color: #a78bfa;'>{rate:.0f}%</div></div>", unsafe_allow_html=True)
                 
                 with col4:
                     status_emoji = "✅" if done_today else "⬜"
-                    col_toggle, col_delete = st.columns(2)
-                    with col_toggle:
-                        if st.button("✓ Done", key=f"toggle_{habit_id}", use_container_width=True):
-                            toggle_log(habit_id, date.today())
-                            st.rerun()
-                    
-                    with col_delete:
-                        if st.button("🗑️ Delete", key=f"delete_{habit_id}", use_container_width=True):
-                            delete_habit(habit_id, user_id)
-                            st.success("Habit deleted!")
-                            st.rerun()
+                    st.markdown(f"<div style='text-align: center; margin-top: 10px;'>{status_emoji}</div>", unsafe_allow_html=True)
                 
-                # Display week status
-                week_text = " ".join([("✅" if status else "⬜") for status in week_status])
-                st.caption(f"Last 7 days: {week_text}")
-                st.divider()
+                # 30-Day Progress Grid
+                st.markdown("#### Last 30 Days")
+                st.markdown(render_30_day_grid(habit_id, habit['color']), unsafe_allow_html=True)
+                
+                # Action Buttons
+                col1, col2, col3 = st.columns([1.5, 1.5, 1])
+                
+                with col1:
+                    if st.button("✓ Mark Done", key=f"done_{habit_id}", use_container_width=True):
+                        toggle_log(habit_id, date.today())
+                        st.success("Great job! 🎉")
+                        st.rerun()
+                
+                with col2:
+                    if st.button("Mark Not Done", key=f"undo_{habit_id}", use_container_width=True):
+                        toggle_log(habit_id, date.today())
+                        st.info("Updated!")
+                        st.rerun()
+                
+                with col3:
+                    if st.button("❌", key=f"delete_{habit_id}", use_container_width=True):
+                        delete_habit(habit_id, user_id)
+                        st.success("Habit deleted!")
+                        st.rerun()
+                
+                st.markdown("---")
     else:
-        st.info("📌 No habits yet! Create one to get started.")
+        st.info("📌 No habits yet! Click '➕ Add Habit' to get started.")
 
 # ─────────────────────────────────────────────────────────────
 # MAIN APP LOGIC
