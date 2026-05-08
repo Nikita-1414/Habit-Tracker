@@ -1,0 +1,234 @@
+/* ========================================
+   HABIT CARD STYLES
+   ======================================== */
+
+.habits-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.habit-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.habit-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Color Bar on Left */
+.habit-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--habit-color, var(--accent));
+  border-radius: 4px 0 0 4px;
+}
+
+/* Card Top Section */
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Habit Info */
+.habit-info h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--spacing-xs);
+}
+
+.habit-info p {
+  color: var(--muted);
+  font-size: var(--text-base);
+  margin-top: var(--spacing-xs);
+  line-height: 1.4;
+}
+
+/* Card Actions */
+.card-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Badges */
+.badges {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.badge {
+  background: var(--surface2);
+  border: 1px solid rgba(167, 139, 250, 0.1);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--text-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: background var(--transition-base), border-color var(--transition-base);
+}
+
+.badge:hover {
+  background: rgba(167, 139, 250, 0.05);
+  border-color: rgba(167, 139, 250, 0.2);
+}
+
+.badge .icon {
+  font-size: 1rem;
+  display: inline-block;
+}
+
+.badge.fire .val {
+  color: #fb923c;
+  font-weight: 700;
+}
+
+.badge.chart .val {
+  color: var(--accent2);
+  font-weight: 700;
+}
+
+/* Weekly Dots */
+.week-row {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.week-day {
+  text-align: center;
+  flex: 1;
+  min-width: 40px;
+}
+
+.week-day .day-label {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  margin-bottom: var(--spacing-xs);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.dot {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  margin: 0 auto;
+}
+
+.dot:hover {
+  border-color: var(--habit-color, var(--accent));
+  background: rgba(167, 139, 250, 0.05);
+}
+
+.dot.done {
+  background: var(--habit-color, var(--accent));
+  border-color: var(--habit-color, var(--accent));
+}
+
+.dot.today {
+  box-shadow: 0 0 0 2px var(--habit-color, var(--accent));
+}
+
+.dot form {
+  display: contents;
+}
+
+/* Chart Section */
+.chart-section {
+  display: none;
+  margin-top: var(--spacing-lg);
+}
+
+.chart-section.open {
+  display: block;
+}
+
+.chart-section canvas {
+  max-height: 100px;
+  width: 100%;
+}
+
+/* Empty State */
+.empty {
+  text-align: center;
+  padding: var(--spacing-3xl) 0;
+  color: var(--muted);
+}
+
+.empty .big {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+  display: block;
+}
+
+.empty h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.2rem;
+  color: var(--text);
+  margin-bottom: var(--spacing-xs);
+}
+
+.empty p {
+  font-size: var(--text-lg);
+  margin-top: var(--spacing-xs);
+}
+
+/* Responsive Card */
+@media (max-width: 640px) {
+  .card-top {
+    flex-direction: column;
+  }
+
+  .card-actions {
+    width: 100%;
+  }
+
+  .btn-check {
+    flex: 1;
+  }
+
+  .week-row {
+    gap: var(--spacing-sm);
+  }
+
+  .week-day {
+    min-width: auto;
+    flex: 0 1 auto;
+  }
+
+  .dot {
+    width: 24px;
+    height: 24px;
+  }
+}

@@ -2,6 +2,7 @@ import streamlit as st
 import sqlite3
 from datetime import datetime, date, timedelta
 import bcrypt
+import calendar
 from database import (
     init_db, add_habit, delete_habit, get_all_habits, toggle_log,
     get_streak, get_completion_rate, get_last_7_days_status,
@@ -15,7 +16,7 @@ from database import (
 st.set_page_config(
     page_title="Habit Tracker",
     page_icon="📅",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
@@ -26,94 +27,337 @@ except Exception as e:
     st.error(f"Database initialization error: {e}")
 
 # ─────────────────────────────────────────────────────────────
-# CUSTOM STYLING (Minimal, Stable CSS)
+# CUSTOM STYLING - EXACT DESIGN MATCH
 # ─────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+        --bg: #0a0a0f;
+        --surface: #13131a;
+        --surface2: #1c1c27;
+        --border: rgba(255,255,255,0.07);
+        --text: #f0f0f5;
+        --muted: #6b6b80;
+        --accent: #a78bfa;
+        --success: #34d399;
+        --danger: #f87171;
     }
     
-    body {
-        background-color: #0a0a0f;
+    body, .main {
+        background: var(--bg) !important;
+        color: var(--text) !important;
     }
     
-    .main {
-        background-color: #0a0a0f;
+    /* Header */
+    .header-box {
+        text-align: center;
+        margin-bottom: 32px;
+        padding: 0 20px;
     }
     
-    .habit-card {
-        background-color: #1a1a2e;
-        border-left: 5px solid #a78bfa;
-        border-radius: 8px;
-        padding: 20px;
-        margin: 15px 0;
+    .header-box h1 {
+        font-size: 2.8rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        margin: 0 0 8px 0;
     }
     
-    .day-grid {
+    .header-title {
+        color: var(--text);
+    }
+    
+    .header-title-accent {
+        color: var(--accent);
+    }
+    
+    .header-date {
+        color: var(--muted);
+        font-size: 0.9rem;
+    }
+    
+    /* Add Habit Button Container */
+    .add-btn-container {
+        text-align: right;
+        margin-bottom: 24px;
+        padding: 0 20px;
+    }
+    
+    /* Stats container */
+    .stats-container {
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin: 12px 0;
-    }
-    
-    .day-number {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
+        gap: 16px;
+        margin-bottom: 40px;
         justify-content: center;
-        font-size: 11px;
-        font-weight: bold;
-        background-color: #2a2a3e;
-        color: #6b6b80;
-    }
-    
-    .day-number.completed {
-        background-color: #a78bfa;
-        color: white;
-    }
-    
-    .progress-bar {
-        width: 100%;
-        height: 6px;
-        background-color: #2a2a3e;
-        border-radius: 3px;
-        overflow: hidden;
-        margin: 8px 0;
-    }
-    
-    .progress-fill {
-        height: 100%;
-        border-radius: 3px;
+        padding: 0 20px;
+        flex-wrap: wrap;
     }
     
     .stat-box {
-        background-color: #1a1a2e;
-        border-radius: 8px;
-        padding: 15px;
-        text-align: center;
-        margin: 5px;
-    }
-    
-    .sidebar-card {
-        background-color: #1a1a2e;
+        background: rgba(30, 30, 45, 0.8);
+        border: 1px solid rgba(255,255,255,0.07);
         border-radius: 12px;
-        padding: 20px;
-        border: 1px solid #2a2a3e;
+        padding: 24px 32px;
+        text-align: center;
+        flex: 1;
+        min-width: 200px;
     }
     
+    .stat-number {
+        font-size: 2.4rem;
+        font-weight: 800;
+        color: var(--accent);
+        margin-bottom: 8px;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Habit card */
+    .habit-card {
+        background: rgba(30, 30, 45, 0.6);
+        border-left: 5px solid;
+        border-radius: 12px;
+        padding: 24px;
+        margin: 0 20px 16px 20px;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .habit-header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+    
+    .habit-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 4px;
+    }
+    
+    .habit-desc {
+        font-size: 0.85rem;
+        color: var(--muted);
+    }
+    
+    .habit-meta {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+        font-size: 0.9rem;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+    }
+    
+    .meta-value {
+        color: var(--text);
+        font-weight: 600;
+    }
+    
+    /* Day labels */
+    .day-labels {
+        display: flex;
+        justify-content: space-around;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-size: 0.65rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Week circles */
+    .week-circles {
+        display: flex;
+        justify-content: space-around;
+        gap: 8px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+    }
+    
+    .day-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.07);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+    
+    .day-circle.completed {
+        border: none;
+        color: white;
+        font-weight: bold;
+    }
+    
+    /* Progress section */
+    .progress-section {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .progress-toggle {
+        font-size: 0.85rem;
+        color: var(--muted);
+        cursor: pointer;
+        margin-bottom: 12px;
+    }
+    
+    .progress-bar-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .progress-bar-bg {
+        flex: 1;
+        height: 18px;
+        background: rgba(255,255,255,0.03);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), var(--success));
+        transition: width 0.3s ease;
+    }
+    
+    .progress-percent {
+        font-size: 0.85rem;
+        color: var(--accent);
+        font-weight: 700;
+        min-width: 45px;
+        text-align: right;
+    }
+    
+    /* Buttons */
+    .habit-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+    }
+    
+    .btn-done {
+        flex: 1;
+        padding: 10px 16px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+    
+    .btn-done:hover {
+        opacity: 0.9;
+    }
+    
+    .btn-close {
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 1.4rem;
+        padding: 0 4px;
+        transition: color 0.2s;
+    }
+    
+    .btn-close:hover {
+        color: var(--text);
+    }
+    
+    /* Styed color picker buttons */
+    .stButton > button {
+        background-color: var(--accent) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 10px 24px !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        transition: all 0.2s !important;
+    }
+    
+    .stButton > button:hover {
+        opacity: 0.9 !important;
+    }
+    
+    /* Text inputs */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea {
+        background-color: rgba(255,255,255,0.05) !important;
+        color: var(--text) !important;
+        border: 1px solid rgba(255,255,255,0.07) !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .stTextInput > div > div > input:focus,
+    .stTextArea > div > div > textarea:focus {
+        border-color: var(--accent) !important;
+        background-color: rgba(167,139,250,0.1) !important;
+    }
+    
+    /* Color picker */
+    .stColorPicker {
+        margin: 12px 0;
+    }
+    
+    /* Responsive */
     @media (max-width: 768px) {
-        .habit-card {
-            padding: 15px;
+        .header-box h1 {
+            font-size: 2rem;
         }
-        .day-number {
+        
+        .stat-box {
+            min-width: 100%;
+            padding: 16px;
+        }
+        
+        .stats-container {
+            flex-direction: column;
+        }
+        
+        .day-circle {
             width: 28px;
             height: 28px;
-            font-size: 9px;
+            font-size: 0.65rem;
+        }
+        
+        .habit-card {
+            margin: 0 16px 16px 16px;
+            padding: 16px;
+        }
+        
+        .habit-meta {
+            gap: 12px;
+            font-size: 0.85rem;
         }
     }
 </style>
@@ -132,8 +376,27 @@ if "show_add_habit" not in st.session_state:
     st.session_state.show_add_habit = False
 
 # ─────────────────────────────────────────────────────────────
-# HELPER FUNCTIONS FOR 30-DAY TRACKING
+# HELPER FUNCTIONS
 # ─────────────────────────────────────────────────────────────
+def get_7_day_status(habit_id):
+    """Get last 7 days status for a habit"""
+    conn = sqlite3.connect("habits.db")
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    cursor = conn.cursor()
+    
+    status = []
+    for i in range(6, -1, -1):
+        check_date = (date.today() - timedelta(days=i)).strftime("%Y-%m-%d")
+        result = cursor.execute(
+            "SELECT completed FROM logs WHERE habit_id = ? AND log_date = ?",
+            (habit_id, check_date)
+        ).fetchone()
+        status.append(bool(result["completed"]) if result else False)
+    
+    conn.close()
+    return status
+
 def get_30_day_status(habit_id):
     """Get last 30 days status for a habit"""
     conn = sqlite3.connect("habits.db")
@@ -152,35 +415,6 @@ def get_30_day_status(habit_id):
     
     conn.close()
     return status
-
-def render_30_day_grid(habit_id, habit_color):
-    """Render 30-day numbered calendar grid"""
-    days_status = get_30_day_status(habit_id)
-    
-    html = '<div class="day-grid">'
-    
-    for day_num, is_completed in enumerate(days_status, 1):
-        if is_completed:
-            html += f'<div class="day-number completed" style="background-color: {habit_color}; border: 2px solid {habit_color};">{day_num}</div>'
-        else:
-            html += f'<div class="day-number">{day_num}</div>'
-    
-    html += '</div>'
-    return html
-
-def render_progress_bar(habit_id, habit_color):
-    """Render progress bar for 30-day completion"""
-    days_status = get_30_day_status(habit_id)
-    completed = sum(days_status)
-    percentage = (completed / len(days_status) * 100) if days_status else 0
-    
-    html = f'''
-    <div class="progress-bar">
-        <div class="progress-fill" style="width: {percentage}%; background-color: {habit_color};"></div>
-    </div>
-    <div style="text-align: right; font-size: 0.85rem; color: {habit_color}; font-weight: bold;">{percentage:.0f}%</div>
-    '''
-    return html
 
 # ─────────────────────────────────────────────────────────────
 # AUTHENTICATION FUNCTIONS
@@ -234,23 +468,26 @@ def logout_user():
 # PAGE: REGISTER
 # ─────────────────────────────────────────────────────────────
 def show_register_page():
-    st.title("📝 Register")
-    st.write("Create a new account to get started!")
+    st.markdown("<h1 style='text-align: center;'>📝 Register</h1>", unsafe_allow_html=True)
+    st.write("")
     
-    with st.form("register_form", clear_on_submit=False):
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
         username = st.text_input("Username", placeholder="Enter your username")
         email = st.text_input("Email", placeholder="Enter your email")
         password = st.text_input("Password", type="password", placeholder="At least 6 characters")
         confirm_password = st.text_input("Confirm Password", type="password", placeholder="Confirm your password")
         
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.form_submit_button("Create Account", use_container_width=True):
+        col_btn1, col_btn2 = st.columns(2)
+        
+        with col_btn1:
+            if st.button("Create Account", use_container_width=True):
                 if register_user(username, email, password, confirm_password):
                     st.rerun()
         
-        with col2:
-            if st.form_submit_button("Back to Login", use_container_width=True):
+        with col_btn2:
+            if st.button("Back to Login", use_container_width=True):
                 st.session_state.page = "login"
                 st.rerun()
 
@@ -258,21 +495,25 @@ def show_register_page():
 # PAGE: LOGIN
 # ─────────────────────────────────────────────────────────────
 def show_login_page():
-    st.title("🎯 Habit Tracker")
-    st.write("Welcome back! Please login to your account.")
+    st.markdown("<h1 style='text-align: center;'>🎯 Habit Tracker</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #6b6b80;'>Welcome back</p>", unsafe_allow_html=True)
+    st.write("")
     
-    with st.form("login_form", clear_on_submit=False):
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
         email = st.text_input("Email", placeholder="Enter your email")
         password = st.text_input("Password", type="password", placeholder="Enter your password")
         
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.form_submit_button("Login", use_container_width=True):
+        col_btn1, col_btn2 = st.columns(2)
+        
+        with col_btn1:
+            if st.button("Login", use_container_width=True):
                 if login_user(email, password):
                     st.rerun()
         
-        with col2:
-            if st.form_submit_button("Create Account", use_container_width=True):
+        with col_btn2:
+            if st.button("Create Account", use_container_width=True):
                 st.session_state.page = "register"
                 st.rerun()
 
@@ -281,162 +522,208 @@ def show_login_page():
 # ─────────────────────────────────────────────────────────────
 def show_dashboard_page():
     # Header
-    col1, col2, col3 = st.columns([2, 2, 1])
+    st.markdown("""
+    <div class='header-box'>
+        <h1><span class='header-title'>Habit</span> <span class='header-title-accent'>Tracker</span></h1>
+        <div class='header-date'>📅 """ + date.today().strftime("%B %d, %Y") + """</div>
+    </div>
+    """, unsafe_allow_html=True)
     
-    with col1:
-        st.markdown("# 🎯 Habit Tracker")
-        st.caption(f"📅 {date.today().strftime('%B %d, %Y')}")
-    
+    # Top right button
+    col1, col2, col3 = st.columns([1, 1, 0.3])
     with col3:
-        st.write(f"👋 **{st.session_state.username}**")
-        if st.button("🚪 Logout", use_container_width=True, key="logout_main"):
-            logout_user()
-            st.rerun()
+        logout_col1, logout_col2 = st.columns([1, 1])
+        with logout_col2:
+            if st.button("🚪", key="logout_btn", help="Logout"):
+                logout_user()
+                st.rerun()
     
     # Get user's habits
     user_id = st.session_state.user_id
     habits = get_all_habits(user_id)
     
-    # Stats Bar
-    st.markdown("---")
-    col1, col2, col3, col4 = st.columns(4)
+    # Stats
+    col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown(f'''
-        <div class="stat-box">
-            <div style="font-size: 1.8rem; font-weight: bold; color: #a78bfa;">📊</div>
-            <div style="font-size: 1.5rem; font-weight: bold; color: white;">{len(habits)}</div>
-            <div style="font-size: 0.7rem; color: #8a8a9e; text-transform: uppercase; letter-spacing: 1px;">Total Habits</div>
+        st.markdown("""
+        <div class='stat-box'>
+            <div class='stat-number'>""" + str(len(habits)) + """</div>
+            <div class='stat-label'>Total Habits</div>
         </div>
-        ''', unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     
     with col2:
         done_today = sum(1 for h in habits if is_completed_today(h["id"]))
-        st.markdown(f'''
-        <div class="stat-box">
-            <div style="font-size: 1.8rem; font-weight: bold; color: #34d399;">✅</div>
-            <div style="font-size: 1.5rem; font-weight: bold; color: white;">{done_today}</div>
-            <div style="font-size: 0.7rem; color: #8a8a9e; text-transform: uppercase; letter-spacing: 1px;">Done Today</div>
+        st.markdown("""
+        <div class='stat-box'>
+            <div class='stat-number'>""" + str(done_today) + """</div>
+            <div class='stat-label'>Done Today</div>
         </div>
-        ''', unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     
     with col3:
         avg_streak = sum(get_streak(h["id"]) for h in habits) / len(habits) if habits else 0
-        st.markdown(f'''
-        <div class="stat-box">
-            <div style="font-size: 1.8rem; font-weight: bold; color: #f87171;">🔥</div>
-            <div style="font-size: 1.5rem; font-weight: bold; color: white;">{avg_streak:.1f}</div>
-            <div style="font-size: 0.7rem; color: #8a8a9e; text-transform: uppercase; letter-spacing: 1px;">Avg Streak</div>
+        st.markdown("""
+        <div class='stat-box'>
+            <div class='stat-number'>""" + f"{avg_streak:.1f}" + """</div>
+            <div class='stat-label'>Avg Streak 🔥</div>
         </div>
-        ''', unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     
-    with col4:
-        if st.button("➕ Add Habit", use_container_width=True, key="add_habit_btn"):
-            st.session_state.show_add_habit = not st.session_state.show_add_habit
+    st.write("")
+    
+    # Add Habit Button
+    col1, col2, col3 = st.columns([1, 1, 0.2])
+    with col3:
+        if st.button("➕ Add Habit", use_container_width=False):
+            st.session_state.show_add_habit = True
             st.rerun()
     
-    st.markdown("---")
+    # Add Habit Modal
+    if st.session_state.show_add_habit:
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("<h3 style='text-align: center; margin-bottom: 24px;'>✨ New Habit</h3>", unsafe_allow_html=True)
+            
+            with st.form("add_habit_form", clear_on_submit=False):
+                habit_name = st.text_input("Habit Name", placeholder="e.g., Morning Run")
+                habit_desc = st.text_area("Description", placeholder="e.g., Run 5km every morning", height=80)
+                
+                st.markdown("<p style='color: #6b6b80; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 8px 0; font-weight: 600;'>PICK A COLOR</p>", unsafe_allow_html=True)
+                
+                # Preset colors
+                colors = ["#a78bfa", "#34d399", "#60a5fa", "#f97316", "#ec4899", "#fbbf24"]
+                color_names = ["Purple", "Green", "Blue", "Orange", "Pink", "Yellow"]
+                
+                selected_color = st.session_state.get("selected_habit_color", colors[0])
+                
+                col1, col2, col3, col4, col5, col6 = st.columns(6)
+                color_cols = [col1, col2, col3, col4, col5, col6]
+                
+                for i, (color, name) in enumerate(zip(colors, color_names)):
+                    with color_cols[i]:
+                        if st.button("●", key=f"color_{color}", help=name):
+                            st.session_state.selected_habit_color = color
+                            selected_color = color
+                
+                st.write("")
+                
+                col_btn1, col_btn2 = st.columns(2)
+                
+                with col_btn1:
+                    if st.form_submit_button("Cancel", use_container_width=True):
+                        st.session_state.show_add_habit = False
+                        st.rerun()
+                
+                with col_btn2:
+                    if st.form_submit_button("✓ Add Habit", use_container_width=True):
+                        if habit_name.strip():
+                            add_habit(user_id, habit_name, habit_desc, selected_color)
+                            st.session_state.show_add_habit = False
+                            st.success("Habit added!")
+                            st.rerun()
+                        else:
+                            st.error("Please enter a habit name.")
     
-    # Main Content Area - Sidebar + Habits
-    main_col1, main_col2 = st.columns([1, 2.5], gap="medium")
+    st.write("")
+    st.write("")
     
-    # LEFT SIDEBAR - Add Habit Form
-    with main_col1:
-        if st.session_state.show_add_habit:
-            st.markdown("## ✨ New Habit")
+    # Display Habits
+    if habits:
+        for habit in habits:
+            habit_id = habit["id"]
+            streak = get_streak(habit_id)
+            rate = get_completion_rate(habit_id)
+            done_today = is_completed_today(habit_id)
+            week_status = get_7_day_status(habit_id)
             
-            habit_name = st.text_input("HABIT NAME", placeholder="e.g., Morning Run", key="habit_name_input", label_visibility="collapsed")
-            habit_desc = st.text_area("DESCRIPTION (OPTIONAL)", placeholder="e.g., Run 5km every morning", height=60, key="habit_desc_input", label_visibility="collapsed")
+            # Habit Card
+            habit_html = f"""
+            <div class='habit-card' style='border-left-color: {habit["color"]};'>
+                <div class='habit-header-top'>
+                    <div>
+                        <div class='habit-title'>{habit['name']}</div>
+                        <div class='habit-desc'>{habit['description'] if habit['description'] else ''}</div>
+                    </div>
+                </div>
+                
+                <div class='habit-meta'>
+                    <div class='meta-item'>🔥 <span class='meta-value'>{streak}</span> day streak</div>
+                    <div class='meta-item'>📊 <span class='meta-value'>{rate:.0f}%</span> 30-day rate</div>
+                </div>
+                
+                <div class='day-labels'>
+                    <div>SAT</div>
+                    <div>SUN</div>
+                    <div>MON</div>
+                    <div>TUE</div>
+                    <div>WED</div>
+                    <div>THU</div>
+                    <div>FRI</div>
+                </div>
+                
+                <div class='week-circles'>
+            """
             
-            st.markdown("**PICK A COLOR**")
+            # Add day circles
+            day_names_short = ['SAT', 'SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI']
+            for i, (status, day_name) in enumerate(zip(week_status, day_names_short)):
+                completed_class = "completed" if status else ""
+                completed_style = f"background-color: {habit['color']};" if status else ""
+                symbol = "✓" if status else ""
+                habit_html += f"""
+                    <div class='day-circle {completed_class}' style='{completed_style}'>{symbol}</div>
+                """
             
-            # Preset color buttons
-            color_cols = st.columns(6)
-            preset_colors = ["#a78bfa", "#34d399", "#60a5fa", "#f97316", "#ec4899", "#eab308"]
-            selected_color = "#a78bfa"
+            habit_html += """
+                </div>
+                
+                <div class='progress-section'>
+                    <div class='progress-toggle' onclick="toggleProgressChart('{habit_id}')">
+                        ▸ Show 30-day progress
+                    </div>
+                    <div class='progress-bar-container'>
+                        <div class='progress-bar-bg'>
+                            <div class='progress-bar-fill' style='width: {rate:.0f}%; background-color: {color};'></div>
+                        </div>
+                        <div class='progress-percent'>{rate:.0f}%</div>
+                    </div>
+                </div>
+                
+                <div class='habit-buttons'>
+                    <button class='btn-done' style='background-color: {color};'>✓ Done</button>
+                    <button class='btn-close'>✕</button>
+                </div>
+            </div>
+            """.format(
+                habit_id=habit_id,
+                rate=rate,
+                color=habit["color"]
+            )
             
-            for idx, col in enumerate(color_cols):
-                with col:
-                    if st.button("", key=f"color_{idx}", use_container_width=True):
-                        selected_color = preset_colors[idx]
+            st.markdown(habit_html, unsafe_allow_html=True)
             
-            # Custom color picker
-            habit_color = st.color_picker("Pick Custom Color", "#a78bfa", key="habit_color_input", label_visibility="collapsed")
-            
-            # Hex display
-            st.markdown(f'<div style="text-align: center; padding: 10px; background-color: #0a0a0f; border: 1px solid #2a2a3e; border-radius: 6px; font-family: monospace; color: #a78bfa; font-weight: bold;">{habit_color.upper()}</div>', unsafe_allow_html=True)
-            st.caption("HEX")
-            
-            st.divider()
-            
-            col1, col2 = st.columns(2)
+            # Action buttons below card
+            col1, col2, col3 = st.columns([1, 1, 0.5])
             with col1:
-                if st.button("Cancel", use_container_width=True, key="cancel_habit"):
-                    st.session_state.show_add_habit = False
+                if st.button("✓ Mark Done", key=f"done_{habit_id}", use_container_width=True):
+                    toggle_log(habit_id, date.today())
                     st.rerun()
             
             with col2:
-                if st.button("Add Habit ✓", use_container_width=True, key="submit_habit"):
-                    if habit_name.strip():
-                        add_habit(user_id, habit_name, habit_desc, habit_color)
-                        st.session_state.show_add_habit = False
-                        st.success("Habit added!")
-                        st.rerun()
-                    else:
-                        st.error("Please enter a habit name.")
-    
-    # RIGHT SIDE - Habit Cards
-    with main_col2:
-        if habits:
-            st.markdown("## 📋 Your Habits")
+                if st.button("Mark Not Done", key=f"undo_{habit_id}", use_container_width=True):
+                    toggle_log(habit_id, date.today())
+                    st.rerun()
             
-            for idx, habit in enumerate(habits):
-                habit_id = habit["id"]
-                streak = get_streak(habit_id)
-                rate = get_completion_rate(habit_id)
-                done_today = is_completed_today(habit_id)
-                
-                # Habit Card
-                st.markdown(f'''
-                <div class="habit-card" style="border-left-color: {habit['color']};">
-                ''', unsafe_allow_html=True)
-                
-                col1, col2 = st.columns([4, 1])
-                
-                with col1:
-                    st.markdown(f"### {habit['name']}")
-                    if habit['description']:
-                        st.caption(habit['description'])
-                
-                with col2:
-                    if st.button("✓ Done", key=f"done_{habit_id}", use_container_width=True):
-                        toggle_log(habit_id, date.today())
-                        st.rerun()
-                    
-                    if st.button("✕", key=f"close_{habit_id}", use_container_width=True):
-                        if st.button("Confirm Delete", key=f"confirm_delete_{habit_id}"):
-                            delete_habit(habit_id, user_id)
-                            st.rerun()
-                
-                # Streak and Rate info
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown(f"🔥 **{streak}** day streak")
-                with col2:
-                    st.markdown(f"📊 **{rate:.0f}%** 30-day rate")
-                
-                # 30-day grid with numbers
-                st.markdown("#### Last 30 Days")
-                st.markdown(render_30_day_grid(habit_id, habit['color']), unsafe_allow_html=True)
-                
-                # Progress bar
-                st.markdown("#### 30-day progress")
-                st.markdown(render_progress_bar(habit_id, habit['color']), unsafe_allow_html=True)
-                
-                st.markdown('</div>', unsafe_allow_html=True)
-                st.markdown("")
-        else:
-            st.info("📌 No habits yet! Click '➕ Add Habit' to get started.")
+            with col3:
+                if st.button("🗑", key=f"delete_{habit_id}", use_container_width=True):
+                    delete_habit(habit_id, user_id)
+                    st.rerun()
+            
+            st.write("")
+    else:
+        st.info("📌 No habits yet! Click '➕ Add Habit' to get started.")
 
 # ─────────────────────────────────────────────────────────────
 # MAIN APP LOGIC

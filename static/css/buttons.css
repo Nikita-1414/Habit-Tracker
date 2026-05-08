@@ -1,0 +1,180 @@
+/* ========================================
+   BUTTON STYLES
+   ======================================== */
+
+/* Primary Button - Add Habit */
+.btn-add {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-md);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: var(--text-base);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(167, 139, 250, 0.3);
+}
+
+.btn-add:active {
+  transform: translateY(0);
+}
+
+/* Check/Done Button */
+.btn-check {
+  padding: var(--spacing-xs) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--habit-color, var(--accent));
+  background: transparent;
+  color: var(--habit-color, var(--accent));
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+
+.btn-check:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.btn-check.done {
+  background: var(--habit-color, var(--accent));
+  color: var(--bg);
+}
+
+.btn-check.done:hover {
+  opacity: 1;
+}
+
+/* Delete Button */
+.btn-del {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-base), color var(--transition-base), border-color var(--transition-base);
+}
+
+.btn-del:hover {
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* Save Button */
+.btn-save {
+  flex: 1;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: var(--text-base);
+  cursor: pointer;
+  transition: opacity var(--transition-base);
+}
+
+.btn-save:hover {
+  opacity: 0.9;
+}
+
+.btn-save:active {
+  opacity: 0.95;
+}
+
+/* Cancel Button */
+.btn-cancel {
+  flex: 1;
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: var(--text-base);
+  cursor: pointer;
+  transition: background var(--transition-base), border-color var(--transition-base);
+}
+
+.btn-cancel:hover {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+
+/* Chart Toggle Button */
+.chart-toggle {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-top: var(--spacing-md);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: color var(--transition-base);
+}
+
+.chart-toggle:hover {
+  color: var(--accent);
+}
+
+/* Dot Button */
+.dot button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+/* Color Dot Selection */
+.color-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.color-dot:hover {
+  transform: scale(1.2);
+  border-color: white;
+}
+
+.color-dot.selected {
+  transform: scale(1.2);
+  border-color: white;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+/* Generic Button Reset */
+button {
+  font-size: inherit;
+  font-weight: inherit;
+}
