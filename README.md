@@ -1,24 +1,24 @@
 # 🔥 Habit Tracker
 
-A beautiful and minimal **habit tracking app** built with Python Streamlit and SQLite. Track your daily habits, build streaks, and visualize your progress — all in one place.
+A simple yet powerful web application to build and track your daily habits. Set goals, monitor your progress, and maintain streaks to stay motivated.
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?style=flat-square&logo=python)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red?style=flat-square&logo=streamlit)
-![SQLite](https://img.shields.io/badge/SQLite-Database-green?style=flat-square&logo=sqlite)
+![Flask](https://img.shields.io/badge/Flask-2.3+-green?style=flat-square&logo=flask)
+![SQLite](https://img.shields.io/badge/SQLite-Database-lightblue?style=flat-square&logo=sqlite)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
 
 ---
 
-## 📸 Features
+## ✨ Features
 
-- ✅ **User Authentication** — secure login & registration with hashed passwords
-- ✅ **Add / Delete Habits** — with custom name, description & color
-- 🔥 **Streak Tracking** — consecutive days auto-calculated
-- 📊 **30-Day Completion Rate** — see your consistency in %
-- 📅 **Weekly Dots** — visual last 7 days status (clickable)
-- 📈 **30-Day Bar Chart** — interactive progress chart via Chart.js
-- 🗄️ **SQLite Database** — all data persisted locally with multi-user support
-- 🌙 **Dark UI** — clean, modern dark theme with responsive design
+- ✅ **User Authentication** — Secure registration and login with bcrypt password hashing
+- ✅ **Habit Management** — Create, view, and delete habits with custom descriptions and colors
+- 🔥 **Streak Tracking** — Current streak counter for each habit
+- 📊 **Completion Rate** — Track percentage of completed days
+- 📅 **7-Day Activity View** — Visual overview of last week's progress
+- 📈 **Monthly Analytics** — Track habit data across the month
+- 🗄️ **Multi-User Support** — SQLite database with relational schema for multiple users
+- 🎨 **Responsive Design** — Clean, user-friendly interface for desktop and mobile
 
 ---
 
@@ -26,20 +26,24 @@ A beautiful and minimal **habit tracking app** built with Python Streamlit and S
 
 ```
 habit-tracker/
-│
-├── app.py              # Main Streamlit app
-├── database.py         # DB setup, queries & logic
-├── requirements.txt    # Python dependencies
-│
-├── .streamlit/
-│   └── config.toml     # Streamlit configuration
-│
-└── habits.db           # SQLite DB (auto-created on first run)
+├── app.py                 # Main Flask application with routes
+├── database.py            # Database initialization and operations
+├── requirements.txt       # Python dependencies
+├── render.yaml           # Render deployment configuration
+├── habits.db             # SQLite database (created automatically)
+└── templates/
+    ├── index.html        # Dashboard/main page
+    ├── login.html        # Login page
+    └── register.html     # Registration page
 ```
 
 ---
 
 ## ⚙️ Installation & Setup
+
+### Prerequisites
+- Python 3.8+
+- pip (Python package manager)
 
 ### 1. Clone the Repository
 ```bash
@@ -47,18 +51,38 @@ git clone https://github.com/YOUR_USERNAME/habit-tracker.git
 cd habit-tracker
 ```
 
-### 2. Install Dependencies
+### 2. Create a Virtual Environment (Recommended)
+```bash
+python -m venv venv
+
+# On Windows
+venv\Scripts\activate
+
+# On macOS/Linux
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Run the App
+### 4. Configure Environment Variables (Optional for Production)
 ```bash
-streamlit run app.py
+# Windows
+set SECRET_KEY=your-secret-key-here
+
+# macOS/Linux
+export SECRET_KEY=your-secret-key-here
 ```
 
-### 4. Open in Browser
-Streamlit will automatically open your app in the browser (typically at `http://localhost:8501`). If not, check the terminal for the URL.
+### 5. Run the Application
+```bash
+python app.py
+```
+
+### 6. Open in Browser
+Navigate to `http://localhost:5000` to access the app.
 
 > **Note:** `habits.db` will be created automatically on first run.
 
@@ -66,69 +90,130 @@ Streamlit will automatically open your app in the browser (typically at `http://
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | Python, Flask |
-| Database | SQLite (via Python's built-in `sqlite3`) |
-| Frontend/Backend | Python, Streamlit |
-| Database | SQLite (via Python's built-in `sqlite3`) |
-| Security | bcrypt (password hashing) |
-| UI/Theme | Streamlit Components + Custom CSS |
-| Fonts | Streamlit Default
+| Component | Technology |
+|-----------|-----------|
+| Backend Framework | Flask (Python) |
+| Database | SQLite with relational schema |
+| Authentication | Bcrypt password hashing |
+| Frontend | HTML/CSS/JavaScript |
+| Deployment | Render.com (configured via render.yaml) |
+| Server | Gunicorn (production WSGI server) |
+
+---
 
 ## 📋 How to Use
 
-1. **Register** — Create a new account with email & password
+1. **Register** — Create a new account with username, email, and password (minimum 6 characters)
 2. **Login** — Sign in with your credentials
-3. Click **"+ Add Habit"** to create a new habit
-4. Choose a name, description, and color
-5. Every day, click **"Mark Done"** to log your habit
-6. Watch your 🔥 streak grow!
-7. Click **"Show 30-day progress"** to see your bar chart
-8. Click any weekly dot to toggle past days
-9. Click **"Logout"** when done
+3. **Create Habits** — Click "Add Habit" to create new habits
+4. **Choose Details** — Set name, description, and custom color for each habit
+5. **Log Daily** — Click to mark habits as completed each day
+6. **Monitor Progress** — 
+   - View your current streak
+   - Check completion rate percentage
+   - See last 7 days activity
+   - Review monthly trends
+7. **Logout** — Sign out when done
 
 ---
 
-## 🌐 Deployment on Streamlit Cloud
+## 🗄️ Database Schema
 
-### 1. Push to GitHub
-```bash
-git add .
-git commit -m "Deploy to Streamlit"
-git push origin main
+### Users Table
+```sql
+id (PRIMARY KEY)
+username (UNIQUE)
+email (UNIQUE)
+password (hashed)
+created_at
 ```
 
-### 2. Deploy on Streamlit Cloud
-- Go to [Streamlit Cloud](https://streamlit.io/cloud)
-- Click **"New app"**
-- Select your GitHub repository, branch, and `app.py`
-- Click **"Deploy!"**
+### Habits Table
+```sql
+id (PRIMARY KEY)
+user_id (FOREIGN KEY)
+name
+description
+color (default: #6366f1)
+created_at
+```
 
-### 3. Configure Environment Variables (if needed)
-In Streamlit Cloud dashboard, go to **App settings** → **Secrets** and add any environment variables.
-
-### Database Persistence
-SQLite database is stored locally in the Streamlit container. For persistent storage across deployments, consider using cloud databases (PostgreSQL, MongoDB, etc.).
-
----
-
-## 🚀 Future Improvements
-
-- [ ] Email/notification reminders
-- [ ] Export data as CSV
-- [ ] Mobile app (React Native)
-- [ ] Dark/Light theme toggle
-- [ ] Social features (share streaks, friend challenges)
-- [ ] Advanced analytics & insightsenders
-
+### Logs Table
+```sql
+id (PRIMARY KEY)
+habit_id (FOREIGN KEY)
+log_date
+completed (0/1)
+UNIQUE(habit_id, log_date)
+```
 
 ---
 
-## 👨‍💻 Author
+## 🚀 Deployment on Render
 
-Made with ❤️ by Nikita
+The application is pre-configured for deployment on [Render](https://render.com):
+
+### Steps:
+1. Push your code to GitHub
+2. Go to [Render Dashboard](https://dashboard.render.com)
+3. Click **"New +"** and select **"Web Service"**
+4. Connect your GitHub repository
+5. Render will automatically detect `render.yaml` and configure your deployment
+6. Your app will be live at your Render URL
+
+### Environment Variables:
+Set the following in Render dashboard under **Environment**:
+- `SECRET_KEY` — Use a strong secret key (don't use the default dev key)
 
 ---
+
+## 🔐 Security Notes
+
+- Passwords are hashed using bcrypt with salt
+- SQLite has PRAGMA foreign_keys enabled for data integrity
+- Set `SECRET_KEY` environment variable in production
+- Enable HTTPS in production environments
+- Input validation on all user forms
+
+---
+
+## 🚀 Future Enhancements
+
+- [ ] Email notifications and reminders
+- [ ] Export habit data as CSV
+- [ ] Social features (share streaks, friend lists)
+- [ ] Mobile app version
+- [ ] Advanced statistics and graphs
+- [ ] Dark mode theme
+- [ ] Habit categories and tags
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to:
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📝 License
+
+This project is open source and available under the MIT License. See the LICENSE file for more details.
+
+---
+
+## 🆘 Support
+
+For issues, questions, or suggestions:
+- Open an issue on GitHub
+- Check existing issues for solutions
+
+---
+
+**Happy Habit Tracking!** 🎯
 
 
